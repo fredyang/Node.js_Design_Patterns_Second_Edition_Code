@@ -1,8 +1,14 @@
 "use strict";
-
+const thunkify = (fn, ctx/*optional*/) => {
+  return (...args) => {
+    return (callback) => {
+      return fn.apply(ctx, args.concat(callback));
+    };
+  };
+};
 const path = require('path');
 const utilities = require('./utilities');
-const thunkify = require('thunkify');
+// const thunkify = require('thunkify');
 const co = require('co');
 const request = thunkify(require('request'));
 const fs = require('fs');
@@ -12,12 +18,12 @@ const writeFile = thunkify(fs.writeFile);
 const nextTick = thunkify(process.nextTick);
 
 function* spiderLinks(currentUrl, body, nesting) {
-  if(nesting === 0) {
+  if (nesting === 0) {
     return nextTick();
   }
-  
+
   const links = utilities.getPageLinks(currentUrl, body);
-  for(let i = 0; i < links.length; i++) {
+  for (let i = 0; i < links.length; i++) {
     yield spider(links[i], nesting - 1);
   }
 }
@@ -37,8 +43,8 @@ function* spider(url, nesting) {
   let body;
   try {
     body = yield readFile(filename, 'utf8');
-  } catch(err) {
-    if(err.code !== 'ENOENT') {
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
       throw err;
     }
     body = yield download(url, filename);
@@ -50,7 +56,7 @@ co(function* () {
   try {
     yield spider(process.argv[2], 1);
     console.log('Download complete');
-  } catch(err) {
+  } catch (err) {
     console.log(err);
   }
 });
